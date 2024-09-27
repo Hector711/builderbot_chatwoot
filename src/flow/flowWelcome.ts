@@ -1,21 +1,5 @@
 import { addKeyword } from "@builderbot/bot";
 
-const discordFlow = addKeyword("doc").addAnswer(
-  [
-    "You can see the documentation here",
-    "📄 https://builderbot.app/docs \n",
-    "Do you want to continue? *yes*",
-  ].join("\n"),
-  { capture: true },
-  async (ctx, { flowDynamic }) => {
-    if (ctx.body.toLocaleLowerCase().includes("yes")) {
-      return await flowDynamic("Thanks!");
-    }
-    await flowDynamic("Thanks!");
-    return;
-  }
-);
-
 const welcomeFlow = addKeyword(["hi", "hello", "hola"])
   .addAnswer(`🙌 Hello welcome to this *Chatbot*`)
   .addAnswer(
@@ -29,8 +13,7 @@ const welcomeFlow = addKeyword(["hi", "hello", "hola"])
         return fallBack("You should type *doc*");
       }
       return;
-    },
-    [discordFlow]
+    }
   );
 
-export { welcomeFlow, discordFlow };
+export { welcomeFlow };
