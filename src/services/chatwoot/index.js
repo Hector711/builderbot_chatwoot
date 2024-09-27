@@ -3,16 +3,7 @@
  * @param dataIn pasando los datos del contacto + el mensaje
  * @param chatwoot la dependencia del chatwoot...(create, buscar...)
  */
-const handlerMessage = async (
-  dataIn: {
-    phone: any;
-    name: any;
-    message: any;
-    mode: any;
-    attachment: any[];
-  },
-  chatwoot: any
-): Promise<void> => {
+const handlerMessage = async (dataIn, chatwoot) => {
   try {
     const contact = await chatwoot.findOrCreateContact({
       from: dataIn.phone,

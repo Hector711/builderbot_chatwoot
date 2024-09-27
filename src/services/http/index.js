@@ -1,10 +1,7 @@
-import downloadFile from "../../utils/downloaderUtils";
-import { config } from "../../config";
+import { downloadFile } from "../../utils/downloaderUtils.js";
+import { config } from "../../config/index.js";
 
 class ServerHttp {
-  private provider: any;
-  private bot: any;
-
   constructor(provider = undefined, bot = undefined) {
     if (!provider || !bot) {
       throw new Error("DEBES_DE_PASAR_BOT");
@@ -19,7 +16,7 @@ class ServerHttp {
    * @param {*} req
    * @param {*} res
    */
-  chatwootCtrl = async (req: any, res: any) => {
+  chatwootCtrl = async (req, res) => {
     const body = req.body;
     const attachments = body?.attachments;
     try {
@@ -98,8 +95,7 @@ class ServerHttp {
         const file = attachments?.length ? attachments[0] : null;
         if (file) {
           console.log(`Este es el archivo adjunto...`, file.data_url);
-          const { fileName, filePath, fileBuffer, extension } =
-            await downloadFile(file.data_url);
+          const { filePath, extension } = await downloadFile(file.data_url); // Eliminadas variables no usadas
 
           switch (extension) {
             case "jpg":

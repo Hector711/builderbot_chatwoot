@@ -7,22 +7,14 @@ import ffmpeg from "fluent-ffmpeg";
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
-export interface FormatOptions {
-  code: string;
-  ext: "mp3";
-}
-
-const formats: Record<string, FormatOptions> = {
+const formats = {
   mp3: {
     code: "libmp3lame",
     ext: "mp3",
   },
 };
 
-const convertAudio = async (
-  filePath: string,
-  format: FormatOptions["ext"] = "mp3"
-): Promise<string> => {
+const convertAudio = async (filePath, format = "mp3") => {
   if (!filePath) {
     throw new Error("filePath is required");
   }
@@ -31,7 +23,7 @@ const convertAudio = async (
     `${path.basename(filePath, path.extname(filePath))}.${formats[format].ext}`
   );
 
-  await new Promise<void>((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     ffmpeg(filePath)
       .audioCodec(formats[format].code)
       .audioBitrate("128k")
@@ -45,7 +37,7 @@ const convertAudio = async (
   return convertedFilePath;
 };
 
-export const downloadFile = async (url: string, token?: string) => {
+export const downloadFile = async (url, token) => {
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const res = await fetch(url, {
@@ -76,7 +68,7 @@ export const downloadFile = async (url: string, token?: string) => {
   }
 
   const fileStream = fs.createWriteStream(filePath);
-  await new Promise<void>((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     res.body.pipe(fileStream);
     res.body.on("error", (err) => {
       reject(err);
@@ -85,8 +77,6 @@ export const downloadFile = async (url: string, token?: string) => {
       resolve();
     });
   });
-
-  const fileBuffer = fs.readFileSync(filePath);
 
   console.log(`File downloaded and saved as ${filePath}`);
 
@@ -108,7 +98,6 @@ export const downloadFile = async (url: string, token?: string) => {
   return {
     fileName: path.basename(finalFilePath),
     filePath: finalFilePath,
-    fileBuffer: fs.readFileSync(finalFilePath),
     extension: finalExtension,
   };
 };

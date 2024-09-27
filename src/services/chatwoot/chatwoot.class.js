@@ -4,11 +4,7 @@ import FormData from "form-data";
 import mime from "mime-types";
 
 class ChatwootClass {
-  config: { account?: string; token?: string; endpoint?: string; inboxId?: string };
-
-  constructor(
-    _config: { account?: string; token?: string; endpoint?: string; inboxId?: string } = {}
-  ) {
+  constructor(_config = {}) {
     if (!_config?.account) {
       throw new Error("ACCOUNT_ERROR");
     }
@@ -34,7 +30,7 @@ class ChatwootClass {
    * @param {*} number
    * @returns
    */
-  formatNumber = (number: any) => {
+  formatNumber = (number) => {
     if (!number.startsWith("+")) {
       return `+${number}`;
     }
@@ -59,7 +55,7 @@ class ChatwootClass {
    * @param {*} path
    * @returns
    */
-  buildBaseUrl = (path: string) => {
+  buildBaseUrl = (path) => {
     return `${this.config.endpoint}/api/v1/accounts/${this.config.account}${path}`;
   };
 
@@ -70,7 +66,7 @@ class ChatwootClass {
    * @param {*} from numero de telefono
    * @returns [] array
    */
-  findContact = async (from: string): Promise<any> => {
+  findContact = async (from) => {
     try {
       const url = this.buildBaseUrl(`/contacts/search?q=${from}`);
   
@@ -83,7 +79,7 @@ class ChatwootClass {
         throw new Error(`HTTP error! status: ${dataFetch.status} - ${dataFetch.statusText}`);
       }
   
-      const data = (await dataFetch.json()) as { payload: any[] };
+      const data = await dataFetch.json();
   
       if (!data.payload || data.payload.length === 0) {
         throw new Error("No contacts found");
@@ -102,7 +98,7 @@ class ChatwootClass {
    * @param {*} dataIn
    * @returns
    */
-  createContact = async (dataIn = { from: "", name: "" }): Promise<any> => {
+  createContact = async (dataIn = { from: "", name: "" }) => {
     try {
       dataIn.from = this.formatNumber(dataIn.from);
   
@@ -124,7 +120,7 @@ class ChatwootClass {
         throw new Error(`HTTP error! status: ${dataFetch.status} - ${dataFetch.statusText}`);
       }
   
-      const response = (await dataFetch.json()) as { payload: { contact: any } };
+      const response = await dataFetch.json();
   
       if (!response.payload || !response.payload.contact) {
         throw new Error("Failed to create contact");
@@ -165,11 +161,7 @@ class ChatwootClass {
    * @param {*} dataIn
    * @returns
    */
-  createConversation = async (dataIn: {
-    contact_id: string;
-    phone_number: string;
-    inbox_id: string; // Añade esta línea
-  }) => {
+  createConversation = async (dataIn) => {
     try {
       const payload = {
         source_id: dataIn.phone_number,
@@ -207,7 +199,7 @@ class ChatwootClass {
    * @param {*} dataIn
    * @returns
    */
-    findConversation = async (dataIn: { phone_number: string }) => {
+  findConversation = async (dataIn) => {
     try {
       const payload = [
         {
@@ -236,23 +228,21 @@ class ChatwootClass {
         );
       }
   
-      const data = (await response.json()) as { payload: any[] };
+      const data = await response.json();
       return data.payload;
     } catch (error) {
       console.error(`[Error findConversation]`, error.message);
       return null;
     }
   };
+
   /**
    * [CONVERSATION]
    * Buscar o Crear conversacion
    * @param {*} dataIn
    * @returns
    */
-  findOrCreateConversation = async (dataIn: {
-    contact_id: string;
-    phone_number: string;
-  }) => {
+  findOrCreateConversation = async (dataIn) => {
     try {
       dataIn.phone_number = this.formatNumber(dataIn.phone_number);
 
@@ -274,6 +264,7 @@ class ChatwootClass {
       return null;
     }
   };
+
   /**
    * Esta funcion ha sido modificada para poder enviar archivos multimedia y texto
    * [messages]
@@ -281,10 +272,7 @@ class ChatwootClass {
    * @param {*} dataIn
    * @returns
    */
-
-  public createMessage = async (
-    dataIn = { msg: "", mode: "", conversation_id: "", attachment: [] }
-  ): Promise<any> => {
+  createMessage = async (dataIn = { msg: "", mode: "", conversation_id: "", attachment: [] }) => {
     try {
       const url = this.buildBaseUrl(
         `/conversations/${dataIn.conversation_id}/messages`
@@ -296,8 +284,8 @@ class ChatwootClass {
       form.append("private", "true");
 
       if (dataIn.attachment?.length) {
-        const mimeType = mime.lookup(dataIn.attachment[0]) as string;
-        const fileName = `${dataIn.attachment[0]}`.split("/").pop()!;
+        const mimeType = mime.lookup(dataIn.attachment[0]);
+        const fileName = `${dataIn.attachment[0]}`.split("/").pop();
         const fileBuffer = await readFile(dataIn.attachment[0]);
 
         form.append("content", dataIn.msg || "");
@@ -368,7 +356,7 @@ class ChatwootClass {
         method: "GET",
       });
 
-      const data = (await dataFetch.json()) as { payload: any };
+      const data = await dataFetch.json();
       if (!data.payload) {
         throw new Error("No inboxes found");
       }

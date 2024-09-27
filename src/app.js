@@ -1,19 +1,19 @@
-import { ChatwootClass } from "./services/chatwoot/chatwoot.class";
-import { downloadMediaMessage } from "@whiskeysockets/baileys";
-import { downloadFile } from "./utils/downloaderUtils";
+import { ChatwootClass } from "./services/chatwoot/chatwoot.class.js";
+// import { downloadMediaMessage } from "@whiskeysockets/baileys"; // No se usa
+import { downloadFile } from "./utils/downloaderUtils.js";
 import {
   createBot,
   MemoryDB,
   createFlow,
   createProvider,
 } from "@builderbot/bot";
-import { handlerMessage } from "./services/chatwoot";
-import ServerHttp from "./services/http";
-import * as mimeType from "mime-types";
+import { handlerMessage } from "./services/chatwoot/index.js";
+import ServerHttp from "./services/http/index.js";
+// import * as mimeType from "mime-types"; // No se usa
 // import { provider } from "./provider";
 import Queue from "queue-promise";
-import { config } from "./config";
-import fs from "fs/promises";
+import { config } from "./config/index.js";
+// import fs from "fs/promises"; // No se usa
 // import templates from "./templates";
 import { BaileysProvider as Provider } from "@builderbot/provider-baileys";
 
@@ -52,7 +52,7 @@ const main = async () => {
          */
         if (payload?.body.includes("_event_") && payload?.url) {
           const { fileName, filePath } = await downloadFile(
-            payload.url,
+            payload.url
             // config.jwtToken
           );
           console.log(`[FIECHERO CREADO] http://localhost:3001/${fileName}`);
