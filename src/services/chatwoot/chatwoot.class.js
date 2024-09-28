@@ -1,7 +1,8 @@
 import { readFile } from "fs/promises";
 import fetch from "node-fetch";
-import FormData from "form-data";
+import { FormData } from "formdata-node";
 import mime from "mime-types";
+import axios from "axios";
 
 class ChatwootClass {
   constructor(_config = {}) {
@@ -68,27 +69,18 @@ class ChatwootClass {
    */
   findContact = async (from) => {
     try {
+      const headers = this.buildHeader();
       const url = this.buildBaseUrl(`/contacts/search?q=${from}`);
-  
-      const dataFetch = await fetch(url, {
-        headers: this.buildHeader(),
-        method: "GET",
-      });
-  
-      if (!dataFetch.ok) {
-        throw new Error(`HTTP error! status: ${dataFetch.status} - ${dataFetch.statusText}`);
-      }
-  
-      const data = await dataFetch.json();
-  
-      if (!data.payload || data.payload.length === 0) {
+
+      const response = await axios.get(url, { headers: headers });
+
+      if (!response.data.payload || response.data.payload.length === 0) {
         throw new Error("No contacts found");
       }
-  
-      return data.payload[0];
+      return response.data.payload[0];
     } catch (error) {
-      console.error(`[Error searchByNumber]`, error);
-      return null;
+      console.error(`[Error searchByNumber] Error: ${error.message}`);
+      throw new Error("Error al buscar el contacto");
     }
   };
 
@@ -101,35 +93,25 @@ class ChatwootClass {
   createContact = async (dataIn = { from: "", name: "" }) => {
     try {
       dataIn.from = this.formatNumber(dataIn.from);
-  
+
+      const url = this.buildBaseUrl(`/contacts`);
+      const headers = this.buildHeader();
       const data = {
         inbox_id: this.config.inboxId,
         name: dataIn.name,
         phone_number: dataIn.from,
       };
-  
-      const url = this.buildBaseUrl(`/contacts`);
-  
-      const dataFetch = await fetch(url, {
-        headers: this.buildHeader(),
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-  
-      if (!dataFetch.ok) {
-        throw new Error(`HTTP error! status: ${dataFetch.status} - ${dataFetch.statusText}`);
-      }
-  
-      const response = await dataFetch.json();
-  
-      if (!response.payload || !response.payload.contact) {
+
+      const response = await axios.post(url, data, { headers: headers });
+
+      if (!response.data.payload) {
         throw new Error("Failed to create contact");
       }
-  
-      return response.payload.contact;
+
+      return response.data.payload.contact;
     } catch (error) {
-      console.error(`[Error createContact]`, error);
-      return null;
+      console.error(`[Error createContact] Error: ${error.message}`);
+      throw new Error("Error al crear el contacto");
     }
   };
 
@@ -163,6 +145,11 @@ class ChatwootClass {
    */
   createConversation = async (dataIn) => {
     try {
+      if (!dataIn.phone_number || !dataIn.inbox_id || !dataIn.contact_id) {
+        throw new Error(
+          "Missing required fields: phone_number, inbox_id, or contact_id"
+        );
+      }
       const payload = {
         source_id: dataIn.phone_number,
         inbox_id: dataIn.inbox_id,
@@ -171,20 +158,20 @@ class ChatwootClass {
           phone_number: dataIn.phone_number,
         },
       };
-  
+
       const url = this.buildBaseUrl(`/conversations`);
       const response = await fetch(url, {
         method: "POST",
         headers: this.buildHeader(),
         body: JSON.stringify(payload),
       });
-  
+
       if (!response.ok) {
         throw new Error(
           `HTTP error! status: ${response.status} - ${response.statusText}`
         );
       }
-  
+
       const data = await response.json();
       return data;
     } catch (error) {
@@ -214,20 +201,20 @@ class ChatwootClass {
           values: [this.config.inboxId],
         },
       ];
-  
+
       const url = this.buildBaseUrl(`/conversations/filter`);
       const response = await fetch(url, {
         method: "POST",
         headers: this.buildHeader(),
         body: JSON.stringify({ payload }),
       });
-  
+
       if (!response.ok) {
         throw new Error(
           `HTTP error! status: ${response.status} - ${response.statusText}`
         );
       }
-  
+
       const data = await response.json();
       return data.payload;
     } catch (error) {
@@ -272,7 +259,9 @@ class ChatwootClass {
    * @param {*} dataIn
    * @returns
    */
-  createMessage = async (dataIn = { msg: "", mode: "", conversation_id: "", attachment: [] }) => {
+  createMessage = async (
+    dataIn = { msg: "", mode: "", conversation_id: "", attachment: [] }
+  ) => {
     try {
       const url = this.buildBaseUrl(
         `/conversations/${dataIn.conversation_id}/messages`
@@ -289,10 +278,11 @@ class ChatwootClass {
         const fileBuffer = await readFile(dataIn.attachment[0]);
 
         form.append("content", dataIn.msg || "");
-        form.append("attachments[]", fileBuffer, {
-          filename: fileName,
-          contentType: mimeType,
-        });
+        form.append(
+          "attachments[]",
+          new Blob([fileBuffer], { type: mimeType }),
+          fileName
+        );
       }
 
       const dataFetch = await fetch(url, {
