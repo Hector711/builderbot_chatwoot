@@ -181,7 +181,7 @@ class ChatwootClass {
    * @param {*} dataIn
    * @returns
    */
-  findConversation = async (dataIn) => {
+  findConversation2 = async (dataIn) => {
     try {
       const url = this.buildBaseUrl(`/conversations/filter`);
       const headers = this.buildHeader();
@@ -199,8 +199,33 @@ class ChatwootClass {
         },
       ];
 
-      const axiosRes = await axios.post(url, data, { headers: headers})
+      const axiosRes = await axios.post(url, data, { headers: headers });
       const conversation = axiosRes.data;
+
+      if (!conversation || !conversation.id) {
+        throw new Error("Failed to find conversation");
+      }
+      return conversation;
+    } catch (error) {
+      console.error(`[Error findConversation]`, error.message);
+      return null;
+    }
+  };
+
+  findConversation = async (dataIn) => {
+    try {
+      const url = this.buildBaseUrl(`/conversations`);
+      const headers = this.buildHeader();
+
+      const axiosRes = await axios.post(url, { headers: headers });
+
+      // Número de teléfono que queremos buscar
+      const phoneNumberToFind = dataIn.phone_number;
+
+      // Uso del método find para buscar el elemento que tenga el número de teléfono
+      const conversation = axiosRes.data.payload.find(
+        (item) => item.meta.sender.phone_number === phoneNumberToFind
+      );
 
       if (!conversation || !conversation.id) {
         throw new Error("Failed to find conversation");
