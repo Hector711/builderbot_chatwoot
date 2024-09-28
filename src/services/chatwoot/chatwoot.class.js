@@ -44,10 +44,11 @@ class ChatwootClass {
    * @returns
    */
   buildHeader = () => {
-    const headers = new Headers();
-    headers.append("api_access_token", this.config.token);
-    headers.append("Content-Type", "application/json");
-    return headers;
+    const token = this.config.token;
+    return {
+      api_access_token: token,
+      "Content-Type": "application/json",
+    };
   };
 
   /**
@@ -62,22 +63,21 @@ class ChatwootClass {
 
   /**
    * [CONTACT]
-   * https://www.chatwoot.com/developers/api/#tag/Contacts/operation/contactSearch
-   * https://chatwoot-production-e265.up.railway.app/api/v1/accounts/1/contacts/search?q=+359987499
-   * @param {*} from numero de telefono
+   * Busca un contacto en Chatwoot que pueda contener el valor q en cualquiera de sus datos.
+   * @param {*} phone numero de telefono
    * @returns [] array
    */
-  findContact = async (from) => {
+  findContact = async (phone) => {
     try {
       const headers = this.buildHeader();
-      const url = this.buildBaseUrl(`/contacts/search?q=${from}`);
+      const url = this.buildBaseUrl(`/contacts/search?q=${phone}`);
 
-      const response = await axios.get(url, { headers: headers });
+      const axiosRes = await axios.get(url, { headers: headers });
 
-      if (!response.data.payload || response.data.payload.length === 0) {
+      if (!axiosRes.data.payload || axiosRes.data.payload.length === 0) {
         throw new Error("No contacts found");
       }
-      return response.data.payload[0];
+      return axiosRes.data.payload[0];
     } catch (error) {
       console.error(`[Error searchByNumber] Error: ${error.message}`);
       throw new Error("Error al buscar el contacto");
@@ -86,29 +86,29 @@ class ChatwootClass {
 
   /**
    * [CONTACT]
-   *  Crear un contacto
+   * Crear un contacto
    * @param {*} dataIn
    * @returns
    */
-  createContact = async (dataIn = { from: "", name: "" }) => {
+  createContact = async (dataIn = { phone: "", name: "" }) => {
     try {
-      dataIn.from = this.formatNumber(dataIn.from);
+      dataIn.phone = this.formatNumber(dataIn.phone);
 
       const url = this.buildBaseUrl(`/contacts`);
       const headers = this.buildHeader();
       const data = {
         inbox_id: this.config.inboxId,
         name: dataIn.name,
-        phone_number: dataIn.from,
+        phone_number: dataIn.phone,
       };
 
-      const response = await axios.post(url, data, { headers: headers });
+      const axiosRes = await axios.post(url, data, { headers: headers });
 
-      if (!response.data.payload) {
+      if (!axiosRes.data.payload) {
         throw new Error("Failed to create contact");
       }
 
-      return response.data.payload.contact;
+      return axiosRes.data.payload.contact;
     } catch (error) {
       console.error(`[Error createContact] Error: ${error.message}`);
       throw new Error("Error al crear el contacto");
@@ -121,9 +121,9 @@ class ChatwootClass {
    * @param {*} dataIn
    * @returns
    */
-  findOrCreateContact = async (dataIn = { from: "", name: "", inbox: "" }) => {
+  findOrCreateContact = async (dataIn = { phone: "", name: "", inbox: "" }) => {
     try {
-      dataIn.from = this.formatNumber(dataIn.from);
+      dataIn.phone = this.formatNumber(dataIn.phone);
       const getContact = await this.findContact(dataIn.from);
       if (!getContact) {
         const contact = await this.createContact(dataIn);
@@ -150,7 +150,9 @@ class ChatwootClass {
           "Missing required fields: phone_number, inbox_id, or contact_id"
         );
       }
-      const payload = {
+      const url = this.buildBaseUrl(`/conversations`);
+      const headers = this.buildHeader();
+      const data = {
         source_id: dataIn.phone_number,
         inbox_id: dataIn.inbox_id,
         contact_id: dataIn.contact_id,
@@ -159,21 +161,14 @@ class ChatwootClass {
         },
       };
 
-      const url = this.buildBaseUrl(`/conversations`);
-      const response = await fetch(url, {
-        method: "POST",
-        headers: this.buildHeader(),
-        body: JSON.stringify(payload),
-      });
+      const axiosRes = await axios.post(url, data, { headers: headers });
+      const conversation = axiosRes.data;
 
-      if (!response.ok) {
-        throw new Error(
-          `HTTP error! status: ${response.status} - ${response.statusText}`
-        );
+      if (!conversation || !conversation.id) {
+        throw new Error("Failed to create conversation");
       }
 
-      const data = await response.json();
-      return data;
+      return conversation;
     } catch (error) {
       console.error(`[Error createConversation]`, error.message);
       return null;
@@ -188,7 +183,9 @@ class ChatwootClass {
    */
   findConversation = async (dataIn) => {
     try {
-      const payload = [
+      const url = this.buildBaseUrl(`/conversations/filter`);
+      const headers = this.buildHeader();
+      const data = [
         {
           attribute_key: "phone_number",
           filter_operator: "equal_to",
@@ -202,21 +199,13 @@ class ChatwootClass {
         },
       ];
 
-      const url = this.buildBaseUrl(`/conversations/filter`);
-      const response = await fetch(url, {
-        method: "POST",
-        headers: this.buildHeader(),
-        body: JSON.stringify({ payload }),
-      });
+      const axiosRes = await axios.post(url, data, { headers: headers})
+      const conversation = axiosRes.data;
 
-      if (!response.ok) {
-        throw new Error(
-          `HTTP error! status: ${response.status} - ${response.statusText}`
-        );
+      if (!conversation || !conversation.id) {
+        throw new Error("Failed to find conversation");
       }
-
-      const data = await response.json();
-      return data.payload;
+      return conversation;
     } catch (error) {
       console.error(`[Error findConversation]`, error.message);
       return null;

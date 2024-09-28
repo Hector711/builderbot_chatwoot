@@ -55,7 +55,7 @@ const main = async () => {
             payload.url
             // config.jwtToken
           );
-          console.log(`[FIECHERO CREADO] http://localhost:3001/${fileName}`);
+          console.log(`[FICHERO CREADO] http://localhost:3001/${fileName}`);
           attachment.push(filePath);
         }
 

@@ -6,14 +6,13 @@
  * @param chatwoot la dependencia del chatwoot...(create, buscar...)
  */
 const handlerMessage = async (dataIn, chatwoot) => {
-  console.log("phone",dataIn.phone)
-  console.log("name",dataIn.name)
   try {
     const contact = await chatwoot.findOrCreateContact({
-      from: dataIn.phone,
+      phone: dataIn.phone,
       name: dataIn.name,
     });
-    console.log("contact",contact)
+    // console.log("contact:",contact)
+    // console.log("contact.id:",contact.id)
     if (!contact) {
       throw new Error("Contact not found or created");
     }
@@ -21,9 +20,8 @@ const handlerMessage = async (dataIn, chatwoot) => {
     const conversation = await chatwoot.findOrCreateConversation({
       contact_id: contact.id,
       phone_number: dataIn.phone,
-      inbox_id: chatwoot.config.inboxId, // Asegúrate de pasar el inbox_id
+      inbox_id: chatwoot.config.inboxId, 
     });
-    console.log("conversation", conversation)
     if (!conversation) {
       throw new Error("Conversation not found or created");
     }
@@ -34,7 +32,7 @@ const handlerMessage = async (dataIn, chatwoot) => {
       conversation_id: conversation.id,
       attachment: dataIn.attachment,
     });
-    console.log("message",dataIn.message)
+    // console.log("message",dataIn.message)
   } catch (error) {
     console.error("ERROR", error);
   }
