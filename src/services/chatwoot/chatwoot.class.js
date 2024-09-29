@@ -143,34 +143,6 @@ class ChatwootClass {
 
   /**
    * [inboxes]
-   * Crear un inbox si no existe
-   * @param {*} dataIn
-   * @returns
-   */
-  createInbox = async (dataIn = { name: "" }) => {
-    try {
-      dataIn.name = this.config.inboxName;
-      const url = this.buildBaseUrl(`/inboxes`);
-      const headers = this.buildHeader();
-      const data = {
-        name: dataIn.name,
-        channel: {
-          type: "api",
-          webhook_url: "",
-        },
-      };
-      const axiosRes = await axios.post(url, data, { headers: headers });
-      const inbox = axiosRes.data;
-      console.log("INBOX CREATED");
-      return inbox;
-    } catch (error) {
-      console.error(`[Error createInbox]:`, error.message);
-      return;
-    }
-  };
-
-  /**
-   * [inboxes]
    * Buscar si existe un inbox creado
    * @param {*} dataIn
    * @returns
@@ -205,6 +177,34 @@ class ChatwootClass {
 
   /**
    * [inboxes]
+   * Crear un inbox si no existe
+   * @param {*} dataIn
+   * @returns
+   */
+  createInbox = async (dataIn = { name: "" }) => {
+    try {
+      dataIn.name = this.config.inboxName;
+      const url = this.buildBaseUrl(`/inboxes`);
+      const headers = this.buildHeader();
+      const data = {
+        name: dataIn.name,
+        channel: {
+          type: "api",
+          webhook_url: "",
+        },
+      };
+      const axiosRes = await axios.post(url, data, { headers: headers });
+      const inbox = axiosRes.data;
+      console.log("INBOX CREATED");
+      return inbox;
+    } catch (error) {
+      console.error(`[Error createInbox]:`, error.message);
+      return;
+    }
+  };
+
+  /**
+   * [inboxes]
    * Buscar o crear inbox
    * @param {*} dataIn
    * @returns
@@ -220,6 +220,41 @@ class ChatwootClass {
     } catch (error) {
       console.error(`[Error findOrCreateInbox]`, error);
       return;
+    }
+  };
+
+  /**
+   * [CONVERSATION]
+   * Buscar si existe una conversacion previa
+   * @param {*} dataIn
+   * @returns
+   */
+  findConversation = async (dataIn) => {
+    try {
+      const url = this.buildBaseUrl(`/conversations`);
+      const headers = this.buildHeader();
+
+      const axiosRes = await axios.get(url, { headers: headers });
+
+      const dataConv = JSON.parse(JSON.stringify(axiosRes.data.data.payload));
+
+      const phoneNumberToFind = dataIn.phone_number;
+
+      const conversation = dataConv.find(
+        (item) => item.meta.sender.phone_number === phoneNumberToFind
+      );
+
+      if (!conversation || !conversation.id) {
+        console.log("No conversation found, creating...");
+        return null;
+      }
+      console.log("CONVERSATION FOUND");
+      return conversation;
+    } catch (error) {
+      console.error(
+        `[Error findConversation] Status: ${error.response?.status}, Data: ${error.response?.data}, Message: ${error.message}`
+      );
+      return null;
     }
   };
 
@@ -264,41 +299,6 @@ class ChatwootClass {
       return conversation;
     } catch (error) {
       console.error(`[Error createConversation]`, error.message);
-      return null;
-    }
-  };
-
-  /**
-   * [CONVERSATION]
-   * Buscar si existe una conversacion previa
-   * @param {*} dataIn
-   * @returns
-   */
-  findConversation = async (dataIn) => {
-    try {
-      const url = this.buildBaseUrl(`/conversations`);
-      const headers = this.buildHeader();
-
-      const axiosRes = await axios.get(url, { headers: headers });
-
-      const dataConv = JSON.parse(JSON.stringify(axiosRes.data.data.payload));
-
-      const phoneNumberToFind = dataIn.phone_number;
-
-      const conversation = dataConv.find(
-        (item) => item.meta.sender.phone_number === phoneNumberToFind
-      );
-
-      if (!conversation || !conversation.id) {
-        console.log("No conversation found, creating...");
-        return null;
-      }
-      console.log("CONVERSATION FOUND");
-      return conversation;
-    } catch (error) {
-      console.error(
-        `[Error findConversation] Status: ${error.response?.status}, Data: ${error.response?.data}, Message: ${error.message}`
-      );
       return null;
     }
   };
@@ -370,7 +370,7 @@ class ChatwootClass {
       const axiosRes = await axios.post(url, form, { headers: headers });
       const message = axiosRes.data;
       console.log("MESSAGE CREATED");
-      console.log('message ->', message.content)
+      console.log("message ->", message.content);
       return message;
     } catch (error) {
       console.error(`[Error createMessage]`, error);
