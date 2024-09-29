@@ -22,6 +22,7 @@ const chatwoot = new ChatwootClass({
   token: config.CHATWOOT_TOKEN,
   endpoint: config.CHATWOOT_ENDPOINT,
   inboxId: config.CHATWOOT_INBOX_ID,
+  inboxName: config.CHATWOOT_INBOX_NAME,
 });
 
 const queue = new Queue({

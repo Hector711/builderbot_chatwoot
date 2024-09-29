@@ -21,6 +21,9 @@ class ChatwootClass {
     if (!_config?.inboxId) {
       throw new Error(`INBOX_ID_ERROR`);
     }
+    if (!_config?.inboxName) {
+      throw new Error(`INBOX_NAME_ERROR`);
+    }
 
     this.config = _config;
   }
@@ -73,11 +76,14 @@ class ChatwootClass {
       const url = this.buildBaseUrl(`/contacts/search?q=${phone}`);
 
       const axiosRes = await axios.get(url, { headers: headers });
-
-      if (!axiosRes.data.payload || axiosRes.data.payload.length === 0) {
-        throw new Error("No contacts found");
+      const contact = axiosRes.data.payload[0];
+      // console.log('contact ->', contact)
+      if (!contact || contact.length === 0) {
+        console.log("No contact found, creating...");
+        return null;
       }
-      return axiosRes.data.payload[0];
+      console.log("Contact found.");
+      return contact;
     } catch (error) {
       console.error(`[Error searchByNumber] Error: ${error.message}`);
       throw new Error("Error al buscar el contacto");
@@ -103,12 +109,12 @@ class ChatwootClass {
       };
 
       const axiosRes = await axios.post(url, data, { headers: headers });
-
-      if (!axiosRes.data.payload) {
+      const contact = axiosRes.data.payload;
+      if (!contact) {
         throw new Error("Failed to create contact");
       }
-
-      return axiosRes.data.payload.contact;
+      console.log("Contact created.");
+      return contact;
     } catch (error) {
       console.error(`[Error createContact] Error: ${error.message}`);
       throw new Error("Error al crear el contacto");
@@ -136,81 +142,87 @@ class ChatwootClass {
     }
   };
 
-    /**
+  /**
    * [inboxes]
    * Crear un inbox si no existe
    * @param {*} dataIn
    * @returns
    */
-    createInbox = async (dataIn = { name: "" }) => {
-      try {
-        const url = this.buildBaseUrl(`/inboxes`);
-        const headers = this.buildHeader();
-        const data = {
-          name: dataIn.name,
-          channel: {
-            type: "api",
-            webhook_url: "",
-          },
-        };
-        const axiosRes = await axios.post(url, data, { headers: headers });
-  
-        return axiosRes.data;
-      } catch (error) {
-        console.error(`[Error createInbox]:`, error.message);
-        return;
+  createInbox = async (dataIn = { name: "" }) => {
+    try {
+      dataIn.name = this.config.inboxName;
+      const url = this.buildBaseUrl(`/inboxes`);
+      const headers = this.buildHeader();
+      const data = {
+        name: dataIn.name,
+        channel: {
+          type: "api",
+          webhook_url: "",
+        },
+      };
+      const axiosRes = await axios.post(url, data, { headers: headers });
+      const inbox = axiosRes.data;
+      console.log("Inbox created.");
+      return inbox;
+    } catch (error) {
+      console.error(`[Error createInbox]:`, error.message);
+      return;
+    }
+  };
+
+  /**
+   * [inboxes]
+   * Buscar si existe un inbox creado
+   * @param {*} dataIn
+   * @returns
+   */
+  findInbox = async (dataIn = { name: "" }) => {
+    try {
+      dataIn.name = this.config.inboxName;
+      const url = this.buildBaseUrl(`/inboxes`);
+      const headers = this.buildHeader();
+
+      const axiosRes = await axios.get(url, { headers: headers });
+
+      const payload = axiosRes.data.payload;
+
+      if (!payload) {
+        throw new Error("No inboxes found");
       }
-    };
-  
-    /**
-     * [inboxes]
-     * Buscar si existe un inbox creado
-     * @param {*} dataIn
-     * @returns
-     */
-    findInbox = async (dataIn = { name: "" }) => {
-      try {
-        const url = this.buildBaseUrl(`/inboxes`);
-        const headers = this.buildHeader();
-  
-        const axiosRes = await axios.get(url, { headers: headers });
-  
-        const payload = axiosRes.data.payload;
-        if (!payload) {
-          throw new Error("No inboxes found");
-        }
-  
-        const checkIfExist = payload.find((o) => o.name === dataIn.name);
-        if (!checkIfExist) {
-          return null;
-        }
-  
-        return checkIfExist;
-      } catch (error) {
-        console.error(`[Error findInbox]`, error);
+
+      const checkIfExist = payload.find((o) => o.name === dataIn.name);
+
+      if (!checkIfExist) {
+        console.log("No inbox found, creating...");
         return null;
       }
-    };
-  
-    /**
-     * [inboxes]
-     * Buscar o crear inbox
-     * @param {*} dataIn
-     * @returns
-     */
-    findOrCreateInbox = async (dataIn = { name: "" }) => {
-      try {
-        const getInbox = await this.findInbox(dataIn);
-        if (!getInbox) {
-          const idInbox = await this.createInbox(dataIn);
-          return idInbox;
-        }
-        return getInbox;
-      } catch (error) {
-        console.error(`[Error findOrCreateInbox]`, error);
-        return;
+      console.log("Inbox found.");
+      return checkIfExist;
+    } catch (error) {
+      console.error(`[Error findInbox]`, error);
+      return null;
+    }
+  };
+
+  /**
+   * [inboxes]
+   * Buscar o crear inbox
+   * @param {*} dataIn
+   * @returns
+   */
+  findOrCreateInbox = async (dataIn = { name: "" }) => {
+    try {
+      const getInbox = await this.findInbox(dataIn);
+      if (!getInbox) {
+        const idInbox = await this.createInbox(dataIn);
+        return idInbox;
       }
-    };
+      return getInbox;
+    } catch (error) {
+      console.error(`[Error findOrCreateInbox]`, error);
+      return;
+    }
+  };
 
   /**
    * [CONVERSATION]
@@ -221,15 +233,21 @@ class ChatwootClass {
    */
   createConversation = async (dataIn) => {
     try {
-      if (!dataIn.phone_number || !dataIn.inbox_id || !dataIn.contact_id) {
+      console.log("dataIn ->", dataIn);
+      if (
+        !dataIn.phone_number ||
+        !dataIn.inbox_id ||
+        !dataIn.contact_id ||
+        !dataIn.source_id
+      ) {
         throw new Error(
-          "Missing required fields: phone_number, inbox_id, or contact_id"
+          "Missing required fields: phone_number, inbox_id, contact_id or source_id"
         );
       }
       const url = this.buildBaseUrl(`/conversations`);
       const headers = this.buildHeader();
       const data = {
-        source_id: dataIn.phone_number,
+        source_id: dataIn.source_id,
         inbox_id: dataIn.inbox_id,
         contact_id: dataIn.contact_id,
         custom_attributes: {
@@ -243,7 +261,7 @@ class ChatwootClass {
       if (!conversation || !conversation.id) {
         throw new Error("Failed to create conversation");
       }
-
+      console.log("Conversation created.");
       return conversation;
     } catch (error) {
       console.error(`[Error createConversation]`, error.message);
@@ -267,17 +285,21 @@ class ChatwootClass {
       const dataConv = JSON.parse(JSON.stringify(axiosRes.data.data.payload));
 
       const phoneNumberToFind = dataIn.phone_number;
-      
+
       const conversation = dataConv.find(
         (item) => item.meta.sender.phone_number === phoneNumberToFind
       );
 
       if (!conversation || !conversation.id) {
-        throw new Error("Failed to find conversation");
+        console.log("No conversation found, creating...");
+        return null;
       }
+      console.log("Conversation found.");
       return conversation;
     } catch (error) {
-      console.error(`[Error findConversation] Status: ${error.response?.status}, Data: ${error.response?.data}, Message: ${error.message}`);
+      console.error(
+        `[Error findConversation] Status: ${error.response?.status}, Data: ${error.response?.data}, Message: ${error.message}`
+      );
       return null;
     }
   };
@@ -301,6 +323,7 @@ class ChatwootClass {
           inbox_id: this.config.inboxId,
           contact_id: dataIn.contact_id,
           phone_number: dataIn.phone_number,
+          source_id: dataIn.source_id,
         });
         return newConversation;
       }
@@ -311,10 +334,9 @@ class ChatwootClass {
     }
   };
 
-
   /**
-   * Esta funcion ha sido modificada para poder enviar archivos multimedia y texto
    * [messages]
+   * Esta funcion ha sido modificada para poder enviar archivos multimedia y texto
    * @param {mode}  "incoming" | "outgoing"
    * @param {*} dataIn
    * @returns
@@ -341,22 +363,22 @@ class ChatwootClass {
         const fileName = `${dataIn.attachment[0]}`.split("/").pop();
         const fileBuffer = await readFile(dataIn.attachment[0]);
 
-        form.append(
-          "attachments[]",
-          fileBuffer,
-          { filename: fileName, contentType: mimeType }
-        );
+        form.append("attachments[]", fileBuffer, {
+          filename: fileName,
+          contentType: mimeType,
+        });
       }
 
       const axiosRes = await axios.post(url, form, { headers: headers });
-      return axiosRes.data;
+      const message = axiosRes.data;
+      console.log("Message created");
+      console.log('message ->', message.content)
+      return message;
     } catch (error) {
       console.error(`[Error createMessage]`, error);
       return;
     }
   };
-
-
 }
 
 export { ChatwootClass };
