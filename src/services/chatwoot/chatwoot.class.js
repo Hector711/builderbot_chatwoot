@@ -29,7 +29,8 @@ class ChatwootClass {
   }
 
   /**
-   * [utility]
+   * ================== [FORMATEO Y CONSTRUCCIÓN] ==================
+   * 
    * Formateo del formato del numero +34
    * @param {*} number
    * @returns
@@ -42,7 +43,6 @@ class ChatwootClass {
   };
 
   /**
-   * [utility]
    * Esta funciona nos ayuda a crear un encabezado con la authorization del token
    * @returns
    */
@@ -55,7 +55,6 @@ class ChatwootClass {
   };
 
   /**
-   * [utility]
    * Esto nos ayuda a construir un url base
    * @param {*} path
    * @returns
@@ -65,7 +64,8 @@ class ChatwootClass {
   };
 
   /**
-   * [CONTACT]
+   * ==================[CONTACT] ==================
+   * 
    * Busca un contacto en Chatwoot que pueda contener el valor q en cualquiera de sus datos.
    * @param {*} phone numero de telefono
    * @returns [] array
@@ -90,8 +90,7 @@ class ChatwootClass {
   };
 
   /**
-   * [CONTACT]
-   * Crear un contacto
+   * Crea un nuevo contacto 
    * @param {*} dataIn
    * @returns
    */
@@ -121,7 +120,6 @@ class ChatwootClass {
   };
 
   /**
-   * [CONTACT]
    * Buscar o crear contacto
    * @param {*} dataIn
    * @returns
@@ -142,8 +140,9 @@ class ChatwootClass {
   };
 
   /**
-   * [inboxes]
-   * Buscar si existe un inbox creado
+   * ================== [INBOXES] ==================
+   *
+   * Busca un inbox existente en Chatwoot.
    * @param {*} dataIn
    * @returns
    */
@@ -176,8 +175,7 @@ class ChatwootClass {
   };
 
   /**
-   * [inboxes]
-   * Crear un inbox si no existe
+   * Busca un inbox y, si no existe, lo crea.
    * @param {*} dataIn
    * @returns
    */
@@ -204,7 +202,6 @@ class ChatwootClass {
   };
 
   /**
-   * [inboxes]
    * Buscar o crear inbox
    * @param {*} dataIn
    * @returns
@@ -224,8 +221,9 @@ class ChatwootClass {
   };
 
   /**
-   * [CONVERSATION]
-   * Buscar si existe una conversacion previa
+   * ================== [MANEJO DE CONVERSACIONES] ==================
+   * 
+   * Busca una conversación existente
    * @param {*} dataIn
    * @returns
    */
@@ -259,9 +257,7 @@ class ChatwootClass {
   };
 
   /**
-   * [CONVERSATION]
-   * Importante crear este atributo personalizado en el chatwoot
-   * Crear conversacion
+   * Crea una nueva conversación
    * @param {*} dataIn
    * @returns
    */
@@ -304,8 +300,6 @@ class ChatwootClass {
   };
 
   /**
-   * [CONVERSATION]
-   * Buscar o Crear conversacion
    * @param {*} dataIn
    * @returns
    */
@@ -333,7 +327,8 @@ class ChatwootClass {
   };
 
   /**
-   * [messages]
+   * ================== [CREACION DE MENSAJES] ==================
+   * 
    * Esta funcion ha sido modificada para poder enviar archivos multimedia y texto
    * @param {mode}  "incoming" | "outgoing"
    * @param {*} dataIn
