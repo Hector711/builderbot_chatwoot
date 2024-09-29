@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import fetch from "node-fetch";
-import { FormData } from "formdata-node";
+import FormData from "form-data";
 import mime from "mime-types";
 import axios from "axios";
 
@@ -124,7 +124,7 @@ class ChatwootClass {
   findOrCreateContact = async (dataIn = { phone: "", name: "", inbox: "" }) => {
     try {
       dataIn.phone = this.formatNumber(dataIn.phone);
-      const getContact = await this.findContact(dataIn.from);
+      const getContact = await this.findContact(dataIn.phone);
       if (!getContact) {
         const contact = await this.createContact(dataIn);
         return contact;
@@ -217,22 +217,24 @@ class ChatwootClass {
       const url = this.buildBaseUrl(`/conversations`);
       const headers = this.buildHeader();
 
-      const axiosRes = await axios.post(url, { headers: headers });
+      const axiosRes = await axios.get(url, { headers: headers });
 
-      // Número de teléfono que queremos buscar
+      const dataConv = JSON.parse(JSON.stringify(axiosRes.data.data.payload));
+
       const phoneNumberToFind = dataIn.phone_number;
-
-      // Uso del método find para buscar el elemento que tenga el número de teléfono
-      const conversation = axiosRes.data.payload.find(
+      
+      const conversation = dataConv.find(
         (item) => item.meta.sender.phone_number === phoneNumberToFind
       );
+      console.log('CONVERSATION ->', conversation);
+      console.log('CONVERSATION ->', conversation.id);
 
       if (!conversation || !conversation.id) {
         throw new Error("Failed to find conversation");
       }
       return conversation;
     } catch (error) {
-      console.error(`[Error findConversation]`, error.message);
+      console.error(`[Error findConversation] Status: ${error.response?.status}, Data: ${error.response?.data}, Message: ${error.message}`);
       return null;
     }
   };
@@ -259,7 +261,7 @@ class ChatwootClass {
         });
         return newConversation;
       }
-      return conversation[0];
+      return conversation;
     } catch (error) {
       console.error(`[Error findOrCreateConversation]`, error.message);
       return null;
@@ -281,6 +283,10 @@ class ChatwootClass {
         `/conversations/${dataIn.conversation_id}/messages`
       );
       const form = new FormData();
+      const headers = {
+        ...form.getHeaders(),
+        api_access_token: this.config.token,
+      };
 
       form.append("content", dataIn.msg);
       form.append("message_type", dataIn.mode);
@@ -291,24 +297,15 @@ class ChatwootClass {
         const fileName = `${dataIn.attachment[0]}`.split("/").pop();
         const fileBuffer = await readFile(dataIn.attachment[0]);
 
-        form.append("content", dataIn.msg || "");
         form.append(
           "attachments[]",
-          new Blob([fileBuffer], { type: mimeType }),
-          fileName
+          fileBuffer,
+          { filename: fileName, contentType: mimeType }
         );
       }
 
-      const dataFetch = await fetch(url, {
-        method: "POST",
-        headers: {
-          api_access_token: this.config.token,
-        },
-        body: form,
-      });
-
-      const data = await dataFetch.json();
-      return data;
+      const axiosRes = await axios.post(url, form, { headers: headers });
+      return axiosRes.data;
     } catch (error) {
       console.error(`[Error createMessage]`, error);
       return;
