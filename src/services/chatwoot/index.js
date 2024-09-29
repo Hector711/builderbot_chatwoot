@@ -11,8 +11,7 @@ const handlerMessage = async (dataIn, chatwoot) => {
       phone: dataIn.phone,
       name: dataIn.name,
     });
-    // console.log("contact:",contact)
-    // console.log("contact.id:",contact.id)
+
     if (!contact) {
       throw new Error("Contact not found or created");
     }
@@ -26,10 +25,17 @@ const handlerMessage = async (dataIn, chatwoot) => {
       throw new Error("Conversation not found or created");
     }
 
+    const inbox = await chatwoot.findInbox({name: "BuilderBot"})
+
+    if (!inbox) {
+      throw new Error("Inbox not found or created");
+    }
+
     await chatwoot.createMessage({
       msg: dataIn.message,
       mode: dataIn.mode,
       conversation_id: conversation.id,
+      inbox_id: inbox.id,
       attachment: dataIn.attachment,
     });
     // console.log("message",dataIn.message)

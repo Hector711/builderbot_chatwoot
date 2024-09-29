@@ -136,6 +136,82 @@ class ChatwootClass {
     }
   };
 
+    /**
+   * [inboxes]
+   * Crear un inbox si no existe
+   * @param {*} dataIn
+   * @returns
+   */
+    createInbox = async (dataIn = { name: "" }) => {
+      try {
+        const url = this.buildBaseUrl(`/inboxes`);
+        const headers = this.buildHeader();
+        const data = {
+          name: dataIn.name,
+          channel: {
+            type: "api",
+            webhook_url: "",
+          },
+        };
+        const axiosRes = await axios.post(url, data, { headers: headers });
+  
+        return axiosRes.data;
+      } catch (error) {
+        console.error(`[Error createInbox]:`, error.message);
+        return;
+      }
+    };
+  
+    /**
+     * [inboxes]
+     * Buscar si existe un inbox creado
+     * @param {*} dataIn
+     * @returns
+     */
+    findInbox = async (dataIn = { name: "" }) => {
+      try {
+        const url = this.buildBaseUrl(`/inboxes`);
+        const headers = this.buildHeader();
+  
+        const axiosRes = await axios.get(url, { headers: headers });
+  
+        const payload = axiosRes.data.payload;
+        if (!payload) {
+          throw new Error("No inboxes found");
+        }
+  
+        const checkIfExist = payload.find((o) => o.name === dataIn.name);
+        if (!checkIfExist) {
+          return null;
+        }
+  
+        return checkIfExist;
+      } catch (error) {
+        console.error(`[Error findInbox]`, error);
+        return null;
+      }
+    };
+  
+    /**
+     * [inboxes]
+     * Buscar o crear inbox
+     * @param {*} dataIn
+     * @returns
+     */
+    findOrCreateInbox = async (dataIn = { name: "" }) => {
+      try {
+        const getInbox = await this.findInbox(dataIn);
+        if (!getInbox) {
+          const idInbox = await this.createInbox(dataIn);
+          return idInbox;
+        }
+        return getInbox;
+      } catch (error) {
+        console.error(`[Error findOrCreateInbox]`, error);
+        return;
+      }
+    };
+
   /**
    * [CONVERSATION]
    * Importante crear este atributo personalizado en el chatwoot
@@ -226,8 +302,8 @@ class ChatwootClass {
       const conversation = dataConv.find(
         (item) => item.meta.sender.phone_number === phoneNumberToFind
       );
-      console.log('CONVERSATION ->', conversation);
-      console.log('CONVERSATION ->', conversation.id);
+      // console.log('CONVERSATION ->', conversation);
+      // console.log('CONVERSATION ->', conversation.id);
 
       if (!conversation || !conversation.id) {
         throw new Error("Failed to find conversation");
@@ -267,6 +343,7 @@ class ChatwootClass {
       return null;
     }
   };
+
 
   /**
    * Esta funcion ha sido modificada para poder enviar archivos multimedia y texto
@@ -312,87 +389,7 @@ class ChatwootClass {
     }
   };
 
-  /**
-   * [inboxes]
-   * Crear un inbox si no existe
-   * @param {*} dataIn
-   * @returns
-   */
-  createInbox = async (dataIn = { name: "" }) => {
-    try {
-      const payload = {
-        name: dataIn.name,
-        channel: {
-          type: "api",
-          webhook_url: "",
-        },
-      };
 
-      const url = this.buildBaseUrl(`/inboxes`);
-      const dataFetch = await fetch(url, {
-        headers: this.buildHeader(),
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      const data = await dataFetch.json();
-      return data;
-    } catch (error) {
-      console.error(`[Error createInbox]`, error);
-      return;
-    }
-  };
-
-  /**
-   * [inboxes]
-   * Buscar si existe un inbox creado
-   * @param {*} dataIn
-   * @returns
-   */
-  findInbox = async (dataIn = { name: "" }) => {
-    try {
-      const url = this.buildBaseUrl(`/inboxes`);
-      const dataFetch = await fetch(url, {
-        headers: this.buildHeader(),
-        method: "GET",
-      });
-
-      const data = await dataFetch.json();
-      if (!data.payload) {
-        throw new Error("No inboxes found");
-      }
-
-      const checkIfExist = data.payload.find((o) => o.name === dataIn.name);
-      if (!checkIfExist) {
-        return null;
-      }
-
-      return checkIfExist;
-    } catch (error) {
-      console.error(`[Error findInbox]`, error);
-      return null;
-    }
-  };
-
-  /**
-   * [inboxes]
-   * Buscar o crear inbox
-   * @param {*} dataIn
-   * @returns
-   */
-  findOrCreateInbox = async (dataIn = { name: "" }) => {
-    try {
-      const getInbox = await this.findInbox(dataIn);
-      if (!getInbox) {
-        const idInbox = await this.createInbox(dataIn);
-        return idInbox;
-      }
-      return getInbox;
-    } catch (error) {
-      console.error(`[Error findOrCreateInbox]`, error);
-      return;
-    }
-  };
 }
 
 export { ChatwootClass };
