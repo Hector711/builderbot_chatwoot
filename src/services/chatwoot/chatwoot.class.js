@@ -257,37 +257,6 @@ class ChatwootClass {
    * @param {*} dataIn
    * @returns
    */
-  findConversation2 = async (dataIn) => {
-    try {
-      const url = this.buildBaseUrl(`/conversations/filter`);
-      const headers = this.buildHeader();
-      const data = [
-        {
-          attribute_key: "phone_number",
-          filter_operator: "equal_to",
-          values: [dataIn.phone_number],
-          query_operator: "AND",
-        },
-        {
-          attribute_key: "inbox_id",
-          filter_operator: "equal_to",
-          values: [this.config.inboxId],
-        },
-      ];
-
-      const axiosRes = await axios.post(url, data, { headers: headers });
-      const conversation = axiosRes.data;
-
-      if (!conversation || !conversation.id) {
-        throw new Error("Failed to find conversation");
-      }
-      return conversation;
-    } catch (error) {
-      console.error(`[Error findConversation]`, error.message);
-      return null;
-    }
-  };
-
   findConversation = async (dataIn) => {
     try {
       const url = this.buildBaseUrl(`/conversations`);
@@ -302,8 +271,6 @@ class ChatwootClass {
       const conversation = dataConv.find(
         (item) => item.meta.sender.phone_number === phoneNumberToFind
       );
-      // console.log('CONVERSATION ->', conversation);
-      // console.log('CONVERSATION ->', conversation.id);
 
       if (!conversation || !conversation.id) {
         throw new Error("Failed to find conversation");
