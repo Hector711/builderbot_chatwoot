@@ -18,7 +18,6 @@ const handlerMessage = async (dataIn, chatwoot) => {
     console.log('')
     console.groupEnd('Contact:')
 
-
     const inbox = await chatwoot.findOrCreateInbox({name: chatwoot.config.inboxName})
     if (!inbox) {
       throw new Error("Inbox not found or created");
@@ -41,10 +40,7 @@ const handlerMessage = async (dataIn, chatwoot) => {
     console.group('Conversation:')
     console.log('id ->', conversation.id)
     console.log('')
-    console.info("Información útil")
     console.groupEnd('Conversation:')
-    const usuarios = [{ nombre: "Juan", edad: 30 }, { nombre: "Ana", edad: 25 }];
-console.table(usuarios);
 
     await chatwoot.createMessage({
       msg: dataIn.message,
