@@ -1,5 +1,5 @@
 import { readFile } from "fs/promises";
-import fetch from "node-fetch";
+// import fetch from "node-fetch";
 import FormData from "form-data";
 import mime from "mime-types";
 import axios from "axios";
@@ -30,7 +30,7 @@ class ChatwootClass {
 
   /**
    * [utility]
-   * Formateo del formato del numero +34 34
+   * Formateo del formato del numero +34
    * @param {*} number
    * @returns
    */
@@ -77,12 +77,11 @@ class ChatwootClass {
 
       const axiosRes = await axios.get(url, { headers: headers });
       const contact = axiosRes.data.payload[0];
-      // console.log('contact ->', contact)
       if (!contact || contact.length === 0) {
         console.log("No contact found, creating...");
         return null;
       }
-      console.log("Contact found.");
+      console.log("CONTACT FOUND");
       return contact;
     } catch (error) {
       console.error(`[Error searchByNumber] Error: ${error.message}`);
@@ -109,11 +108,11 @@ class ChatwootClass {
       };
 
       const axiosRes = await axios.post(url, data, { headers: headers });
-      const contact = axiosRes.data.payload;
+      const contact = axiosRes.data.payload.contact;
       if (!contact) {
         throw new Error("Failed to create contact");
       }
-      console.log("Contact created.");
+      console.log("CONTACT CREATED");
       return contact;
     } catch (error) {
       console.error(`[Error createContact] Error: ${error.message}`);
@@ -162,7 +161,7 @@ class ChatwootClass {
       };
       const axiosRes = await axios.post(url, data, { headers: headers });
       const inbox = axiosRes.data;
-      console.log("Inbox created.");
+      console.log("INBOX CREATED");
       return inbox;
     } catch (error) {
       console.error(`[Error createInbox]:`, error.message);
@@ -196,7 +195,7 @@ class ChatwootClass {
         console.log("No inbox found, creating...");
         return null;
       }
-      console.log("Inbox found.");
+      console.log("INBOX FOUND");
       return checkIfExist;
     } catch (error) {
       console.error(`[Error findInbox]`, error);
@@ -261,7 +260,7 @@ class ChatwootClass {
       if (!conversation || !conversation.id) {
         throw new Error("Failed to create conversation");
       }
-      console.log("Conversation created.");
+      console.log("CONVERSATION CREATED");
       return conversation;
     } catch (error) {
       console.error(`[Error createConversation]`, error.message);
@@ -294,7 +293,7 @@ class ChatwootClass {
         console.log("No conversation found, creating...");
         return null;
       }
-      console.log("Conversation found.");
+      console.log("CONVERSATION FOUND");
       return conversation;
     } catch (error) {
       console.error(
@@ -318,7 +317,6 @@ class ChatwootClass {
         phone_number: dataIn.phone_number,
       });
       if (!conversation || conversation.length === 0) {
-        console.log("Creating conversation");
         const newConversation = await this.createConversation({
           inbox_id: this.config.inboxId,
           contact_id: dataIn.contact_id,
@@ -371,7 +369,7 @@ class ChatwootClass {
 
       const axiosRes = await axios.post(url, form, { headers: headers });
       const message = axiosRes.data;
-      console.log("Message created");
+      console.log("MESSAGE CREATED");
       console.log('message ->', message.content)
       return message;
     } catch (error) {

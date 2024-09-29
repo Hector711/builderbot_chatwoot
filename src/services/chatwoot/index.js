@@ -12,20 +12,22 @@ const handlerMessage = async (dataIn, chatwoot) => {
     if (!contact) {
       throw new Error("Contact not found or created");
     }
-    console.group('CONTACT')
+    console.group('Contact:')
     console.log('id ->', contact.id)
     console.log('source ->', contact.contact_inboxes[0].source_id)
-    console.groupEnd('CONTACT')
+    console.log('')
+    console.groupEnd('Contact:')
 
 
     const inbox = await chatwoot.findOrCreateInbox({name: chatwoot.config.inboxName})
     if (!inbox) {
       throw new Error("Inbox not found or created");
     } 
-    console.group('INBOX')
+    console.group('Inbox:')
     console.log('id ->', inbox.id)
     console.log('name ->', inbox.name)
-    console.groupEnd('INBOX')
+    console.log('')
+    console.groupEnd('Inbox:')
 
     const conversation = await chatwoot.findOrCreateConversation({
       source_id: contact.contact_inboxes[0].source_id,
@@ -36,9 +38,13 @@ const handlerMessage = async (dataIn, chatwoot) => {
     if (!conversation) {
       throw new Error("Conversation not found or created");
     }
-    console.group('CONVERSATION')
+    console.group('Conversation:')
     console.log('id ->', conversation.id)
-    console.groupEnd('CONVERSATION')
+    console.log('')
+    console.info("Información útil")
+    console.groupEnd('Conversation:')
+    const usuarios = [{ nombre: "Juan", edad: 30 }, { nombre: "Ana", edad: 25 }];
+console.table(usuarios);
 
     await chatwoot.createMessage({
       msg: dataIn.message,
