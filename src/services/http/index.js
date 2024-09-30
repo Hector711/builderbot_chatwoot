@@ -9,49 +9,43 @@ class ServerHttp {
     this.provider = provider;
     this.bot = bot;
     provider.server.post("/chatwoot", this.chatwootCtrl);
-    // console.log(provider)
   }
-  
+
   /**
    * Este el controlador del los enventos del Chatwoot
    * @param {*} req
    * @param {*} res
-  */
- chatwootCtrl = async (req, res) => {
+   */
+  chatwootCtrl = async (req, res) => {
     const body = req.body;
-    /* Archivos multimedia adjuntos al mensaje.*/
     const attachments = body?.attachments;
-    
-    // console.log('body ->', body)
-    console.log('\n')
-    console.group('=== BODY')
-    console.log('Event ->', body.event)
-    console.log('Inbox ->', body.inbox)
-    console.log('Content ->',body.content)
-    console.log('Attachments ->', attachments)
-    // console.log('Changed attributes ->', body.changed_attributes)
-    console.log('Private ->', body.private)
-    console.log('')
-    console.groupEnd('=== BODY')
+    const mapperAttributes = body?.changed_attributes?.map((a) => Object.keys(a)).flat(2);
 
-
+    console.log("\n");
+    console.group("===> 📡 CHATWOOT WEBHOOK 📡");
+    console.log("Event ->", body.event);
+    console.log("Inbox ->", body.inbox);
+    console.log("Content ->", body.content);
+    console.log("Message type ->", body?.message_type);
+    console.log("Attachments ->", attachments);
+    console.log("Private ->", body.private);
+    console.log("Content Type ->", body?.content_type);
+    console.log("Channel ->", body?.conversation?.channel);
+    console.log("Conversation status ->", body?.conversation?.status);
+    console.log("Changed attributes ->", mapperAttributes);
+    console.log("");
+    console.groupEnd("===> 📡 CHATWOOT WEBHOOK 📡");
 
     try {
       /**
-       * Esta funcion se encarga de agregar o remover el numero a la blacklist eso quiere decir que podemos hacer que el chatbot responda o no. 
-       * Nos sirve, para evitar que el chatbot responda mientras un agente humano esta escribiendo desde chatwoot
+       * Agrega o remueve el numero a la blacklist, para permitir al chatbot responder o no
        */
-       /* 
-      * Extracción todas las claves de los objetos en changed_attributes, para mas tarde comprobar cuales son las claves modificadas. 
-      */ 
-       const mapperAttributes = body?.changed_attributes
-       ?.map((a) => Object.keys(a))
-       .flat(2);
+      
       if (
         body?.event === "conversation_updated" &&
         mapperAttributes.includes("assignee_id")
       ) {
-        console.group('- Evento: Conversacion actualizada y nueva asignación')
+        console.group("- Evento: Conversacion actualizada y nueva asignación");
         const phone = body?.meta?.sender?.phone_number.replace("+", "");
         const idAssigned =
           body?.changed_attributes[0]?.assignee_id?.current_value ?? null;
@@ -61,27 +55,48 @@ class ServerHttp {
         } else {
           this.bot.dynamicBlacklist.remove(phone);
         }
-        console.groupEnd('- Evento: Conversacion actualizada y nueva asignación')
+        console.groupEnd(
+          "- Evento: Conversacion actualizada y nueva asignación"
+        );
         res.statusCode = 200;
         res.end("ok");
         return;
       }
 
-      /*
-      * Este código maneja el envío de una solicitud de calificación de satisfacción al cliente cuando una conversación se ha resuelto:
-      * - Asegura que el mensaje se envíe correctamente
-      * - Actualiza las URLs si es necesario
-      * - Y maneja la lista negra del bot para permitir que el cliente reciba mensajes nuevamente si estaba bloqueado.
-      */ 
+      /**
+       * Mensaje del cliente recibido (Confirmacion desde Chatwoot)
+       * */ 
       if (
-        body?.content_type === "input_csat" &&
+        body?.event === "message_updated" && body?.message_type === "incoming"
+      ) {
+        console.log("- Evento: Mensaje de cliente recibido");
+        res.statusCode = 200;
+        return res.end("ok");
+      }
+
+      /**
+       * Conversación resuelta 
+       * */ 
+      if (
+        body?.event === "conversation_updated" && mapperAttributes.includes("status") && body?.conversation?.status === undefined
+      ) {
+        console.log("- Evento: Conversación resuelta");
+        res.statusCode = 200;
+        return res.end("ok");
+      }
+
+      /**
+       * Solicitud de calificación de satisfacción
+       */
+      if (
         body?.event === "message_created" &&
+        body?.content_type === "input_csat" &&
         body?.conversation?.channel.includes("Channel::Api") &&
         body?.private === false &&
         body?.content?.includes("Por favor califica esta conversación") &&
         body?.conversation?.status === "resolved"
       ) {
-        console.group('- Evento: Calificación de satisfacción')
+        console.group("- Evento: Calificación de satisfacción");
         const phone = body.conversation?.meta?.sender?.phone_number.replace(
           "+",
           ""
@@ -99,7 +114,7 @@ class ServerHttp {
         if (this.bot.dynamicBlacklist.checkIf(phone)) {
           this.bot.dynamicBlacklist.remove(phone);
         }
-        console.groupEnd('- Evento: Calificación de satisfacción')
+        console.groupEnd("- Evento: Calificación de satisfacción");
         return;
       }
 
@@ -112,18 +127,15 @@ class ServerHttp {
         body?.message_type === "outgoing" &&
         body?.conversation?.channel.includes("Channel::Api");
       if (checkIfMessage) {
-        console.group('- Evento: Mensaje Chatwoot -> Bot -> Cliente')
+        console.group("- Evento: Mensaje Chatwoot -> Cliente");
         const phone = body.conversation?.meta?.sender?.phone_number.replace(
           "+",
           ""
         );
-        console.log(phone)
         const content = body?.content ?? "";
-        console.log(content)
         const file = attachments?.length ? attachments[0] : null;
         if (file) {
-          console.log('El mensaje incluye un archivo adjunto')
-          console.log(`Este es el archivo adjunto...`, file.data_url);
+          console.log("El mensaje incluye un archivo adjunto:", file.data_url);
           const { filePath, extension } = await downloadFile(file.data_url);
 
           switch (extension) {
@@ -156,20 +168,19 @@ class ServerHttp {
           return;
         }
 
-        /**
-         * esto envia un mensaje de texto al ws
-         */
-        console.log(`Intentando enviar mensaje a ${phone}@c.us con contenido: ${content}`);
-        await this.provider.sendMessage(`${phone}@c.us`, content, {});
-        await this.bot.provider.sendMessage(`34722396259`, 'mensahe', {media: null })
-
-        console.log('Mensaje enviado correctamente')
+        console.log(`Enviando mensaje al cliente...`);
         res.statusCode = 200;
-        res.end("ok");
-        console.groupEnd('- Evento: Mensaje Bot -> Cliente')
+        await this.provider.sendMessage(`${phone}@c.us`, content, {});
+        console.log("Enviado con exito!");Ç
+        console.groupEnd("- Evento: Mensaje Chatwoot -> Cliente");
+        return res.end("ok");
+        // await this.bot.provider.sendMessage(`34722396259`, 'mensahe', {media: null })
+        // res.statusCode = 200;
+        // res.end("ok");
         return;
       }
-      console.log('No se cumplió ninguna condición')
+      console.log("No hubo respuesta a Chatwoot ⚠️");
+
     } catch (error) {
       console.log(error);
       res.statusCode = 405;

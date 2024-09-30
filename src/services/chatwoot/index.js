@@ -5,6 +5,7 @@
  */
 const handlerMessage = async (dataIn, chatwoot) => {
   try {
+    
     const contact = await chatwoot.findOrCreateContact({
       phone: dataIn.phone,
       name: dataIn.name,
@@ -12,21 +13,21 @@ const handlerMessage = async (dataIn, chatwoot) => {
     if (!contact) {
       throw new Error("Contact not found or created");
     }
-    console.group('Contact:')
+    console.group('CONTACT:')
     console.log('id ->', contact.id)
     console.log('source ->', contact.contact_inboxes[0].source_id)
     console.log('')
-    console.groupEnd('Contact:')
+    console.groupEnd('CONTACT:')
 
     const inbox = await chatwoot.findOrCreateInbox({name: chatwoot.config.inboxName})
     if (!inbox) {
       throw new Error("Inbox not found or created");
     } 
-    console.group('Inbox:')
+    console.group('INBOX:')
     console.log('id ->', inbox.id)
     console.log('name ->', inbox.name)
     console.log('')
-    console.groupEnd('Inbox:')
+    console.groupEnd('INBOX:')
 
     const conversation = await chatwoot.findOrCreateConversation({
       source_id: contact.contact_inboxes[0].source_id,
@@ -37,10 +38,10 @@ const handlerMessage = async (dataIn, chatwoot) => {
     if (!conversation) {
       throw new Error("Conversation not found or created");
     }
-    console.group('Conversation:')
+    console.group('CONVERSATION:')
     console.log('id ->', conversation.id)
     console.log('')
-    console.groupEnd('Conversation:')
+    console.groupEnd('CONVERSATION:')
 
     await chatwoot.createMessage({
       msg: dataIn.message,

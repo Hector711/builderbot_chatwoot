@@ -81,7 +81,7 @@ class ChatwootClass {
         console.log("No contact found, creating...");
         return null;
       }
-      console.log("CONTACT FOUND");
+      console.log("Contact found!");
       return contact;
     } catch (error) {
       console.error(`[Error searchByNumber] Error: ${error.message}`);
@@ -111,7 +111,7 @@ class ChatwootClass {
       if (!contact) {
         throw new Error("Failed to create contact");
       }
-      console.log("CONTACT CREATED");
+      console.log("Contact created!");
       return contact;
     } catch (error) {
       console.error(`[Error createContact] Error: ${error.message}`);
@@ -166,7 +166,7 @@ class ChatwootClass {
         console.log("No inbox found, creating...");
         return null;
       }
-      console.log("INBOX FOUND");
+      console.log("Inbox found!");
       return checkIfExist;
     } catch (error) {
       console.error(`[Error findInbox]`, error);
@@ -193,7 +193,7 @@ class ChatwootClass {
       };
       const axiosRes = await axios.post(url, data, { headers: headers });
       const inbox = axiosRes.data;
-      console.log("INBOX CREATED");
+      console.log("Inbox created!");
       return inbox;
     } catch (error) {
       console.error(`[Error createInbox]:`, error.message);
@@ -246,7 +246,7 @@ class ChatwootClass {
         console.log("No conversation found, creating...");
         return null;
       }
-      console.log("CONVERSATION FOUND");
+      console.log("Conversation found!");
       return conversation;
     } catch (error) {
       console.error(
@@ -291,7 +291,7 @@ class ChatwootClass {
       if (!conversation || !conversation.id) {
         throw new Error("Failed to create conversation");
       }
-      console.log("CONVERSATION CREATED");
+      console.log("Conversation created!");
       return conversation;
     } catch (error) {
       console.error(`[Error createConversation]`, error.message);
@@ -364,8 +364,9 @@ class ChatwootClass {
 
       const axiosRes = await axios.post(url, form, { headers: headers });
       const message = axiosRes.data;
-      console.log("MESSAGE CREATED");
+      console.log("Message created!");
       console.log("message ->", message.content);
+      console.log('\n\n')
       return message;
     } catch (error) {
       console.error(`[Error createMessage]`, error);
