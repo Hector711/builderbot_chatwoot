@@ -40,9 +40,11 @@ const main = async () => {
     provider: adapterProvider,
     flow: adapterFlow,
   });
+  console.log("\n\n\n\nBOT ----->",bot.provider.sendMessage)
 
-  new ServerHttp(adapterProvider, bot);
 
+  // Maneja los mensajes entrantes Cliente -> Bot -> Chatwoot
+ //  este evento se dispara cada vez que envio o recibo un mensajen
   adapterProvider.on("message", (payload) => {
     queue.enqueue(async () => {
       try {
@@ -79,7 +81,7 @@ const main = async () => {
   });
 
   /**
-   * Los mensajes salientes (cuando el bot le envia un mensaje al cliente ---> )
+   * Los mensajes salientes Bot -> Cliente -> (Actualizamos Chatwoot) )
    */
   bot.on("send_message", (payload) => {
     queue.enqueue(async () => {
@@ -111,6 +113,7 @@ const main = async () => {
   });
 
   bot.httpServer(+config.PORT);
+  new ServerHttp(adapterProvider, bot);
 };
 
 main();
